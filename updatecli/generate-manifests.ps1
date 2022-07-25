@@ -51,6 +51,10 @@ foreach ($bom in $bills) {
           branch     = '{{ .github.branch }}'
           username   = '{{ .github.username }}'
           token      = '{{ requiredEnv .github.token }}'
+          commitmessage = @{
+            scope = "deps"
+            title = "Bump jenkins.version from $($jenkinsVersions[$version]) to {{ source `"jenkins`" }} for bom-$version"
+          }
         }
       }
     }
@@ -171,6 +175,10 @@ foreach ($bom in $bills) {
             branch     = '{{ .github.branch }}'
             username   = '{{ .github.username }}'
             token      = '{{ requiredEnv .github.token }}'
+            commitmessage = @{
+              scope = "deps"
+              title = "Bump $artifact from $version to {{ source `"plugin`" }} in /bom-$jenkinsVersion"
+            }
           }
         }
       }
