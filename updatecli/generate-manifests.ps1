@@ -34,6 +34,11 @@ $pom.project.profiles.profile | ForEach-Object {
 
 $last = $bills | Where-Object { $_ -ne "bom-weekly" } | Select-Object -Last 1
 foreach ($bom in $bills) {
+  $version = $bom -replace "bom-", ""
+  $versionWithoutX = $version -replace ".x", ""
+
+  $updateJenkinsManifestPath = "$manifestDirectory/update-jenkins-$version.yaml"
+
   $updateJenkinsManifest = [ordered]@{
     scms         = [ordered]@{
       github = [ordered]@{
@@ -46,6 +51,10 @@ foreach ($bom in $bills) {
           branch     = '{{ .github.branch }}'
           username   = '{{ .github.username }}'
           token      = '{{ requiredEnv .github.token }}'
+          commitmessage = @{
+            scope = "deps"
+            title = "Bump jenkins.version from $($jenkinsVersions[$version]) to {{ source `"jenkins`" }} for bom-$version"
+          }
         }
       }
     }
@@ -54,11 +63,6 @@ foreach ($bom in $bills) {
     targets      = [ordered]@{}
     pullrequests = [ordered]@{}
   }
-
-  $version = $bom -replace "bom-", ""
-  $versionWithoutX = $version -replace ".x", ""
-
-  $updateJenkinsManifestPath = "$manifestDirectory/update-jenkins-$version.yaml"
 
   if ($bom -eq "bom-weekly") {
     $updateJenkinsManifest.sources["jenkins"] = [ordered]@{
@@ -161,6 +165,10 @@ foreach ($bom in $bills) {
             branch     = '{{ .github.branch }}'
             username   = '{{ .github.username }}'
             token      = '{{ requiredEnv .github.token }}'
+            commitmessage = @{
+              scope = "deps"
+              title = "Bump $artifact from $version to {{ source `"plugin`" }} in /bom-$jenkinsVersion"
+            }
           }
         }
       }
