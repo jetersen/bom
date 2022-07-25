@@ -34,6 +34,11 @@ $pom.project.profiles.profile | ForEach-Object {
 
 $last = $bills | Where-Object { $_ -ne "bom-weekly" } | Select-Object -Last 1
 foreach ($bom in $bills) {
+  $version = $bom -replace "bom-", ""
+  $versionWithoutX = $version -replace ".x", ""
+
+  $updateJenkinsManifestPath = "$manifestDirectory/update-jenkins-$version.yaml"
+
   $updateJenkinsManifest = [ordered]@{
     scms         = [ordered]@{
       github = [ordered]@{
@@ -54,11 +59,6 @@ foreach ($bom in $bills) {
     targets      = [ordered]@{}
     pullrequests = [ordered]@{}
   }
-
-  $version = $bom -replace "bom-", ""
-  $versionWithoutX = $version -replace ".x", ""
-
-  $updateJenkinsManifestPath = "$manifestDirectory/update-jenkins-$version.yaml"
 
   if ($bom -eq "bom-weekly") {
     $updateJenkinsManifest.sources["jenkins"] = [ordered]@{
@@ -130,6 +130,11 @@ foreach ($bom in $bills) {
 
   ConvertTo-Yaml -Data $updateJenkinsManifest -OutFile $updateJenkinsManifestPath -Force
 
+  if ($bom -eq "bom-weekly") {
+    # weekly bom is handled by dependabot
+    continue
+  }
+
   $pomPath = "$bom/pom.xml"
   $pom = New-Object System.Xml.XmlDocument
   $pom.PreserveWhitespace = $true
@@ -142,6 +147,11 @@ foreach ($bom in $bills) {
     $artifact = $dependency.artifactId
     $groupId = $dependency.groupId
     $version = $dependency.version
+    if ($version.StartsWith("$")) {
+      # remove the dollar sign and curly braces
+      $version = $version -replace '^\${(.+?)}', '$1'
+      $version = $pom.project.properties."$version"
+    }
 
     $updatePluginsManifestPath = "$manifestDirectory/update-plugin-$jenkinsVersion-$artifact-$version.yaml"
 
@@ -214,6 +224,7 @@ foreach ($bom in $bills) {
         labels      = @("dependencies")
         automerge   = $true
         mergemethod = "squash"
+        usetitleforautomerge = $true
       }
     }
 

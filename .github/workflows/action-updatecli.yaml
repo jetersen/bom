@@ -45,7 +45,7 @@ jobs:
           UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Apply
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/testupdatecli'
         run: |
           updatecli apply --config updatecli/updatecli.d --values updatecli/values.yaml
         env:
